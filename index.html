@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Устный счёт</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --text:#1b1d21; --muted:#6b7280; --line:#e2e5ea;
+  --accent:#2f6fec; --accent-ink:#ffffff; --accent-soft:#e8effd;
+  --ok:#15803d; --ok-bg:#e6f6ec; --bad:#dc2626; --bad-bg:#fdecec; --chip:#eef1f5;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 10px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#111317; --card:#1a1d22; --text:#e8ebf0; --muted:#9aa3af; --line:#2b3037;
+    --accent:#6b97ff; --accent-ink:#0b1020; --accent-soft:#1f2a44;
+    --ok:#3ccf7d; --ok-bg:#13301f; --bad:#ff6b6b; --bad-bg:#3a1919; --chip:#242930;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+[hidden]{display:none!important}
+main{max-width:560px;margin:0 auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+h1{font-size:1.6rem;margin:8px 0 16px;letter-spacing:-.01em}
+h2{font-size:1.05rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.label{font-size:.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px}
+.label:first-child{margin-top:0}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;background:var(--chip);padding:4px;border-radius:12px}
+.seg button{border:0;background:transparent;padding:9px 4px;border-radius:9px;font-size:.95rem;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--accent);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#seg-mode{grid-template-columns:repeat(2,1fr)}
+@media (min-width:480px){#seg-mode{grid-template-columns:repeat(4,1fr)}}
+.desc{font-size:.9rem;color:var(--muted);margin-top:8px;min-height:1.3em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:.9rem}
+.chips button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.link{border:0;background:none;color:var(--accent);padding:8px 0 0;font-size:.92rem;text-decoration:underline;text-underline-offset:3px}
+.primary{border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:12px 18px;font-weight:600}
+.primary:active{filter:brightness(.92)}
+.secondary{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 18px;font-weight:600}
+.secondary:disabled{opacity:.45;cursor:default}
+.ghost{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 16px;font-size:.92rem;color:var(--muted)}
+.big{width:100%;margin-top:18px;padding:14px;font-size:1.05rem}
+.note{color:var(--muted);font-size:.85rem;text-align:center}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);font-size:.92rem}
+
+/* лучшие и история */
+table.best{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+table.best th,table.best td{padding:6px 2px;text-align:center;border-bottom:1px solid var(--line)}
+table.best th:first-child,table.best td:first-child{text-align:left}
+table.best td small{display:block;color:var(--muted);font-size:.75rem}
+table.best tr:last-child td{border-bottom:0}
+.fbest{margin-top:10px;font-size:.9rem}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.hist li:last-child{border-bottom:0}
+.hist .r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hist .when{color:var(--muted);font-size:.8rem}
+
+/* тренировка */
+.bar{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums;font-weight:600}
+.bar #q-timer{margin-left:auto;color:var(--muted)}
+.icon{border:0;background:var(--chip);width:34px;height:34px;border-radius:50%;line-height:34px;padding:0}
+.progress{height:4px;background:var(--chip);border-radius:4px;margin:12px 0 0;overflow:hidden}
+.progress>div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.stage{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:min(12vh,90px)}
+.problem{font-size:clamp(2.2rem,11vw,3.6rem);font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.2;margin-bottom:22px;transition:color .15s;max-width:100%}
+.problem.md{font-size:clamp(1.8rem,8.4vw,3rem)}
+.problem.sm{font-size:clamp(1.35rem,5.6vw,2.3rem)}
+.problem.f{font-size:clamp(1.5rem,6.6vw,2.2rem);font-weight:500;font-variant-numeric:normal}
+.problem.ok{color:var(--ok)} .problem.bad{color:var(--bad)}
+form#q-form{display:flex;gap:8px;width:100%;max-width:360px}
+#q-input{flex:1;min-width:0;font-size:1.6rem;text-align:center;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--card);outline:none;font-variant-numeric:tabular-nums}
+#q-input:focus{border-color:var(--accent)}
+#q-input.ok{border-color:var(--ok);background:var(--ok-bg)}
+#q-input.bad{border-color:var(--bad);background:var(--bad-bg)}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb{min-height:2em;margin:14px 0 6px;font-size:1.1rem;font-weight:600}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.opts{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px}
+.opts button{display:flex;align-items:center;gap:12px;text-align:left;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;font-size:1.12rem;min-height:54px}
+.opts button .k{flex:none;width:24px;height:24px;border-radius:6px;background:var(--chip);color:var(--muted);font-size:.8rem;display:grid;place-items:center}
+.opts button.ok{border-color:var(--ok);background:var(--ok-bg)}
+.opts button.bad{border-color:var(--bad);background:var(--bad-bg)}
+.hint{margin-top:12px;background:var(--accent-soft);border-radius:12px;padding:12px 14px;text-align:left;font-size:.98rem;max-width:440px;width:100%}
+.hint b{color:var(--accent)}
+
+/* итог */
+.center{text-align:center}
+.score{font-size:3.4rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.stats div{background:var(--chip);border-radius:12px;padding:10px}
+.stats span{display:block;font-size:.8rem;color:var(--muted)}
+.stats b{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.errs{list-style:none;margin:0;padding:0}
+.errs li{padding:9px 0;border-bottom:1px solid var(--line);font-size:1.02rem}
+.errs li:last-child{border-bottom:0}
+.errs .yours{font-size:.85rem;color:var(--bad)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions .ghost{grid-column:1/-1;justify-self:center;margin-top:4px}
+
+/* шпаргалка */
+.sheet-row{padding:7px 0;border-bottom:1px solid var(--line)}
+.sheet-row:last-child{border-bottom:0}
+table.trig{width:100%;border-collapse:collapse;font-size:.95rem;text-align:center}
+table.trig th,table.trig td{border-bottom:1px solid var(--line);padding:5px 2px}
+.sheet-sub{margin:14px 0 4px;font-weight:600;font-size:.95rem}
+
+/* формулы */
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.86em;line-height:1.15;margin:0 .08em}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .18em .05em}
+.fr>span:last-child{padding:.05em .18em 0}
+.rt{border-top:1px solid currentColor;padding-top:.04em}
+.ab{border-left:1px solid currentColor;border-right:1px solid currentColor;padding:0 .12em;margin:0 .1em}
+.cond,.rad{font-size:.62em;color:var(--muted);white-space:nowrap}
+sup,sub{font-size:.68em;line-height:0}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ===== Старт ===== -->
+<section id="scr-start" class="screen">
+  <h1>Устный счёт</h1>
+  <div class="card">
+    <div class="label">Режим</div>
+    <div class="seg" id="seg-mode">
+      <button data-v="add">Сложение</button>
+      <button data-v="mul">Умножение</button>
+      <button data-v="mix">Смешанный</button>
+      <button data-v="f">Формулы</button>
+    </div>
+    <div id="lvl-block">
+      <div class="label">Уровень</div>
+      <div class="seg" id="seg-level">
+        <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+      </div>
+      <div class="desc" id="lvl-desc"></div>
+    </div>
+    <div id="cat-block" hidden>
+      <div class="label">Темы</div>
+      <div class="chips" id="cats"></div>
+      <button class="link" id="btn-sheet" type="button">Шпаргалка по выбранным темам</button>
+    </div>
+    <div class="label">Примеров</div>
+    <div class="seg" id="seg-n"><button data-v="10">10</button><button data-v="20">20</button></div>
+    <button class="primary big" id="btn-go" type="button">Начать</button>
+  </div>
+  <div class="card"><h2>Лучшие результаты</h2><div id="best"></div></div>
+  <div class="card"><h2>Последние тренировки</h2><div id="hist"></div></div>
+  <p class="note" id="store-note" hidden>Хранилище браузера недоступно — история не сохранится после закрытия страницы.</p>
+</section>
+
+<!-- ===== Тренировка ===== -->
+<section id="scr-quiz" class="screen" hidden>
+  <div class="bar">
+    <span id="q-count">1 / 10</span>
+    <span id="q-timer">0:00</span>
+    <button id="btn-exit" class="icon" type="button" aria-label="Выйти">✕</button>
+  </div>
+  <div class="progress"><div id="q-prog"></div></div>
+  <div class="stage">
+    <div id="q-text" class="problem"></div>
+    <form id="q-form" autocomplete="off">
+      <input id="q-input" type="text" inputmode="numeric" pattern="[0-9 ]*" enterkeyhint="done" autocomplete="off" aria-label="Ответ">
+      <button class="primary" type="submit">Проверить</button>
+    </form>
+    <div id="q-opts" class="opts" hidden></div>
+    <div id="q-fb" class="fb" aria-live="polite"></div>
+    <button id="btn-hint" class="ghost" type="button">Приём</button>
+    <div id="q-hint" class="hint" hidden></div>
+  </div>
+</section>
+
+<!-- ===== Итог ===== -->
+<section id="scr-result" class="screen" hidden>
+  <h1>Итог</h1>
+  <div class="card center">
+    <div id="r-score" class="score"></div>
+    <div id="r-sub" class="muted"></div>
+    <div class="stats">
+      <div><span>Общее время</span><b id="r-time"></b></div>
+      <div><span>В среднем на пример</span><b id="r-avg"></b></div>
+    </div>
+  </div>
+  <div class="card" id="r-err-card"><h2>Ошибки</h2><ul class="errs" id="r-err"></ul></div>
+  <div class="actions">
+    <button class="primary" id="btn-again" type="button">Ещё раз</button>
+    <button class="secondary" id="btn-errs" type="button">Только ошибки</button>
+    <button class="ghost" id="btn-menu" type="button">В меню</button>
+  </div>
+</section>
+
+<!-- ===== Шпаргалка ===== -->
+<section id="scr-sheet" class="screen" hidden>
+  <div class="bar"><span>Шпаргалка</span><button id="btn-sheet-close" class="icon" type="button" aria-label="Закрыть" style="margin-left:auto">✕</button></div>
+  <div id="sheet" style="margin-top:14px"></div>
+</section>
+
+</main>
+<script>
+'use strict';
+
+/* ================= утилиты ================= */
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const NB = ' ';
+// 48 372 — группы разрядов только для пятизначных и больше
+const fmt = n => { const s = String(n); return s.length >= 5 ? s.replace(/\B(?=(\d{3})+(?!\d))/g, NB) : s; };
+
+/* ================= генератор примеров ================= */
+
+// d-значное число без нуля на конце; в 2–3-значных нулей нет вовсе, в 4–5-значных — не больше одного
+function num(d) {
+  for (;;) {
+    const n = rnd(10 ** (d - 1), 10 ** d - 1);
+    if (n % 10 === 0) continue;
+    const zeros = (String(n).match(/0/g) || []).length;
+    if (zeros > (d >= 4 ? 1 : 0)) continue;
+    return n;
+  }
+}
+const num2 = () => { for (;;) { const n = num(2); if (n !== 11) return n; } };   // двузначное, не 11
+const between = (lo, hi) => { for (;;) { const n = rnd(lo, hi); if (n % 10 !== 0 && n !== 11) return n; } };
+
+// сколько раз при сложении в столбик происходит переход через разряд
+function carries(nums) {
+  let c = 0, k = 0;
+  const max = Math.max(...nums);
+  for (let p = 1; p <= max; p *= 10) {
+    const s = nums.reduce((t, n) => t + Math.floor(n / p) % 10, 0) + c;
+    c = Math.floor(s / 10);
+    if (c > 0) k++;
+  }
+  return k;
+}
+
+const mkAdd = (nums, type) => ({
+  kind: 'add', type, nums,
+  text: nums.map(fmt).join(' + '),
+  answer: nums.reduce((a, b) => a + b, 0),
+  key: '+' + nums.slice().sort((a, b) => a - b).join(','),
+});
+const mkMul = (a, b, type) => ({
+  kind: 'mul', type, nums: [a, b],
+  text: fmt(a) + ' × ' + fmt(b),
+  answer: a * b,
+  key: '*' + Math.min(a, b) + ',' + Math.max(a, b),
+});
+const mkSq = (n, type) => ({
+  kind: 'mul', type, nums: [n, n],
+  text: fmt(n) + '²',
+  answer: n * n,
+  key: '*' + n + ',' + n,
+});
+
+function two(da, db, minCarry) {
+  for (;;) {
+    const a = num(da), b = num(db);
+    if (carries([a, b]) >= minCarry) return mkAdd([a, b], 'add2');
+  }
+}
+const chain = (k, digits) =>
+  mkAdd(Array.from({ length: k }, () => num(Array.isArray(digits) ? pick(digits) : digits)), 'addN');
+
+const SQ5 = [15, 25, 35, 45, 55, 65, 75, 85, 95];
+const NEAR100 = []; for (let n = 88; n <= 112; n++) if (n % 10 !== 0) NEAR100.push(n);
+
+const GEN = {
+  add: {
+    1: [() => two(3, 3, 1), () => chain(3, 2)],
+    2: [() => two(4, 3, 2), () => chain(3, 3)],
+    3: [() => two(4, 4, 2)],
+    4: [() => two(5, 4, 2), () => chain(4, 3)],
+    5: [() => two(5, 5, 2), () => chain(3, 4), () => chain(4, [3, 4])],
+  },
+  mul: {
+    1: [
+      () => mkMul(num2(), rnd(3, 9), 'mulx1'),
+      () => mkMul(rnd(11, 19), rnd(11, 19), 'teens'),
+      () => mkMul(num2(), 11, 'x11'),
+      () => mkMul(num2(), 25, 'x25'),
+    ],
+    2: [
+      () => mkMul(between(12, 49), between(12, 49), 'mul2'),
+      () => mkSq(pick(SQ5), 'sq5'),
+    ],
+    3: [
+      () => mkMul(num2(), num2(), 'mul2'),
+      () => { const n = num2(); return mkSq(n, n % 10 === 5 ? 'sq5' : 'sq2'); },
+    ],
+    4: [() => mkMul(num(3), rnd(3, 9), 'mulx1')],
+    5: [
+      () => mkMul(num(3), num2(), 'mul3x2'),
+      () => mkSq(pick(NEAR100), 'sq100'),
+    ],
+  },
+};
+
+function genOne(mode, level) {
+  const m = mode === 'mix' ? pick(['add', 'mul']) : mode;
+  return pick(GEN[m][level])();
+}
+
+// набор из n разных примеров (без повторов внутри тренировки)
+function makeSet(mode, level, n) {
+  const out = [], seen = new Set();
+  for (let guard = 0; out.length < n && guard < 20000; guard++) {
+    const p = genOne(mode, level);
+    if (seen.has(p.key)) continue;
+    seen.add(p.key);
+    out.push(p);
+  }
+  return out;
+}
+
+// проверка ответа: null — ввод не число (не засчитываем), иначе true/false
+function checkAnswer(p, raw) {
+  const s = String(raw).replace(/[\s  ]/g, '');
+  if (!/^\d+$/.test(s)) return null;
+  return Number(s) === p.answer;
+}
+
+/* ================= приёмы ================= */
+const places = n => { // 3659 → [3000, 600, 50, 9]
+  const s = String(n), out = [];
+  for (let i = 0; i < s.length; i++) if (s[i] !== '0') out.push(Number(s[i]) * 10 ** (s.length - 1 - i));
+  return out;
+};
+const ceilTo = (x, s) => Math.ceil(x / s) * s;
+
+function roundingFor(b) {
+  for (const [s, lim] of [[1000, 30], [100, 12], [10, 2]]) {
+    if (s >= b || (s === 10 && b >= 1000)) continue; // до десятков округляем только небольшие числа
+    const R = ceilTo(b, s), d = R - b;
+    if (d > 0 && d <= lim) return { R, d };
+  }
+  return null;
+}
+
+function hint(p) {
+  const [a, b] = p.nums;
+  switch (p.type) {
+    case 'add2': {
+      let x = a, y = b, r = roundingFor(b);
+      if (!r) { const ra = roundingFor(a); if (ra) { x = b; y = a; r = ra; } }
+      if (r) return `<b>Округли и поправь.</b> ${fmt(y)} = ${fmt(r.R)} − ${r.d}, поэтому ${fmt(x)} + ${fmt(y)} = ${fmt(x)} + ${fmt(r.R)} − ${r.d}.`;
+      return `<b>По разрядам, слева направо.</b> К ${fmt(a)} прибавляй части второго числа по очереди: ${places(b).map(fmt).join(' + ')}. Держи в голове только промежуточную сумму.`;
+    }
+    case 'addN': {
+      let s;
+      const len = new Set(p.nums.map(n => String(n).length));
+      if (len.size === 1) {
+        const P = 10 ** (String(a).length - 1);
+        const heads = p.nums.map(n => Math.floor(n / P) * P), tails = p.nums.map(n => n % P);
+        s = `<b>Сначала старшие разряды, потом остальное.</b> ${heads.map(fmt).join(' + ')}, затем ${tails.join(' + ')}, и сложи две суммы.`;
+      } else {
+        s = `<b>По одному числу.</b> Складывай слева направо, каждый раз прибавляя следующее число по разрядам.`;
+      }
+      for (let i = 0; i < p.nums.length; i++) for (let j = i + 1; j < p.nums.length; j++)
+        if ((p.nums[i] + p.nums[j]) % 10 === 0)
+          return s + ` Заметь: у ${fmt(p.nums[i])} и ${fmt(p.nums[j])} единицы дают 10 — эту пару удобно сложить первой.`;
+      return s;
+    }
+    case 'mulx1': {
+      const u = a % 10;
+      if (u >= 8) {
+        const d = 10 - u, R = a + d;
+        return `<b>Округли и поправь.</b> ${a} = ${R} − ${d}, поэтому ${a} × ${b} = ${R} × ${b} − ${d} × ${b}.`;
+      }
+      return `<b>Разложи по разрядам.</b> ${a} × ${b} = ${places(a).map(x => x + ' × ' + b).join(' + ')}.`;
+    }
+    case 'teens':
+      return `<b>Числа от 11 до 19.</b> К первому числу прибавь единицы второго, умножь на 10 и прибавь произведение единиц: ${a} × ${b} = (${a} + ${b % 10}) × 10 + ${a % 10} × ${b % 10}.`;
+    case 'x11': {
+      const t = Math.floor(a / 10), u = a % 10;
+      return `<b>Умножение на 11.</b> Раздвинь цифры и впиши между ними их сумму: ${a} × 11 → ${t} [${t} + ${u}] ${u}. Если сумма больше 9 — единицу перенеси в старший разряд.`;
+    }
+    case 'x25':
+      return `<b>×25 = ×100 : 4.</b> ${a} × 25 = ${a}00 : 4. ` + (a % 4 === 0
+        ? `${a} делится на 4 нацело — раздели и допиши два нуля.`
+        : `Раздели ${a} на 4 с остатком: частное — это сотни, а каждая единица остатка даёт ещё 25.`);
+    case 'mul2':
+    case 'mul3x2': {
+      const m = (a + b) / 2, d = Math.abs(a - b) / 2;
+      if (p.type === 'mul2' && d > 0 && Number.isInteger(m) && m % 10 === 0)
+        return `<b>Разность квадратов.</b> Числа симметричны относительно ${m}: ${a} × ${b} = (${m} − ${d})(${m} + ${d}) = ${m}² − ${d}².`;
+      const x = b % 10 >= 8 ? b : (p.type === 'mul2' && a % 10 >= 8 ? a : null);
+      if (x !== null) {
+        const y = x === b ? a : b, dd = 10 - x % 10;
+        return `<b>Округли и поправь.</b> ${x} = ${x + dd} − ${dd}, поэтому ${y} × ${x} = ${y} × ${x + dd} − ${y} × ${dd}.`;
+      }
+      const t = b - b % 10;
+      return `<b>Разложи второй множитель.</b> ${a} × ${b} = ${a} × ${t} + ${a} × ${b % 10}. Сначала умножь на десятки, потом прибавь единицы.`;
+    }
+    case 'sq5': {
+      const t = Math.floor(a / 10);
+      return `<b>Квадрат числа на 5.</b> Число десятков умножь на следующее за ним число и допиши 25: ${a}² → ${t} × ${t + 1}, затем «25».`;
+    }
+    case 'sq2': {
+      const u = a % 10, t = a - u, d = u <= 5 ? u : u - 10; // a − d — ближайшее круглое
+      const lo = a - Math.abs(d), hi = a + Math.abs(d);
+      return `<b>Через круглое число.</b> n² = (n − d)(n + d) + d²: ${a}² = ${lo} × ${hi} + ${Math.abs(d)}². ` +
+        `Или по формуле (a + b)² = a² + 2ab + b²: ${a}² = ${t}² + 2 × ${t} × ${u} + ${u}².`;
+    }
+    case 'sq100': {
+      const d = a - 100, sg = d < 0 ? '−' : '+', ad = Math.abs(d);
+      // пример берём на другом числе, чтобы не выдать ответ
+      const lo = a === 97 ? 96 : 97, hi = a === 104 ? 103 : 104;
+      const ex = n => { const e = n - 100, s = e < 0 ? '−' : '+', ae = Math.abs(e);
+        return `${n}² → ${n} ${s} ${ae} = ${n + e} и ${ae}² = ${String(ae * ae).padStart(2, '0')} → ${n * n}`; };
+      return `<b>Квадрат около 100.</b> Пример: ${ex(lo)}; ${ex(hi)}. ` +
+        `Здесь ${a} = 100 ${sg} ${ad}: первая часть ${a} ${sg} ${ad}, последние две цифры — ${ad}²` +
+        (ad * ad > 99 ? ` (это больше 99, перенеси сотни в первую часть).` : '.');
+    }
+  }
+  return '';
+}
+
+/* ================= формулы ================= */
+const F = (n, d) => `<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const R = x => `√<span class="rt">${x}</span>`;
+const P = x => `<sup>${x}</sup>`;
+const B = x => `<sub>${x}</sub>`;
+const AB = x => `<span class="ab">${x}</span>`;
+const C = ' + C';
+const sq = f => `${f}${P(2)}`;
+
+const CATS = [
+  { id: 'der', name: 'Производные',
+    h: 'Учи парами: sin ↔ cos (у производной cos — минус), tg ↔ ctg (у ctg — минус, cos² и sin² меняются местами), arcsin ↔ arccos и arctg ↔ arcctg (у «арк-ко» всегда минус). (xⁿ)′ = n·xⁿ⁻¹ покрывает √x = x^½ и 1/x = x⁻¹.' },
+  { id: 'int', name: 'Интегралы',
+    h: 'Интеграл — это производная наоборот: продифференцируй вариант ответа и сравни с подынтегральной функцией. Не забывай «+ C» и модуль под логарифмом.' },
+  { id: 'trv', name: 'Тригонометрия: значения', short: 'Триг. значения',
+    h: 'Синус для 0°, 30°, 45°, 60°, 90°: √0/2, √1/2, √2/2, √3/2, √4/2; косинус — те же значения в обратном порядке; tg = sin / cos. Для других углов сведи к острому углу и поставь знак по четверти: sin > 0 в I и II, cos > 0 в I и IV, tg > 0 в I и III.' },
+  { id: 'trf', name: 'Тригонометрия: формулы', short: 'Триг. формулы',
+    h: 'Почти всё выводится из sin(α ± β) и cos(α ± β): положи β = α — получишь двойной угол; из cos 2α = 1 − 2 sin²α = 2 cos²α − 1 — формулы понижения степени.' },
+  { id: 'alg', name: 'Алгебра',
+    h: 'Сомневаешься — подставь числа: a = 2, b = 1 (или n = 3) и сравни левую и правую часть.' },
+  { id: 'log', name: 'Степени и логарифмы', short: 'Степени, логарифмы',
+    h: 'Логарифм — это показатель степени, поэтому свойства логарифмов повторяют свойства степеней: произведение → сумма, частное → разность, степень → множитель. Проверь на a = 2, b = 8.' },
+  { id: 'lim', name: 'Пределы и ряды',
+    h: 'Все замечательные пределы — это «эквивалентности при x → 0»: sin x ~ x, eˣ − 1 ~ x, ln(1 + x) ~ x, 1 − cos x ~ x²/2. Ряды: eˣ — все знаки «+»; sin — нечётные степени со сменой знака; cos — чётные; ln(1 + x) — без факториалов, знаки чередуются.' },
+];
+const CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+
+const BANK = [];
+const add = (c, rows) => rows.forEach(([q, a, d, o]) => BANK.push(Object.assign({ c, q, a, d }, o || {})));
+
+const cos2 = sq('cos') + 'x', sin2 = sq('sin') + 'x', x2 = 'x' + P(2);
+add('der', [
+  ['(C)′', '0', ['1', 'C', 'x']],
+  [`(x${P('n')})′`, `n·x${P('n−1')}`, [`x${P('n+1')}`, `n·x${P('n')}`, F(`x${P('n+1')}`, 'n + 1')]],
+  ['(√x)′', F('1', '2√x'), [F('1', '√x'), F('√x', '2'), F('2', '√x')], { h: '√x = x^½, поэтому (√x)′ = ½·x^(−½) = 1 / (2√x).' }],
+  [`(${F('1', 'x')})′`, '−' + F('1', x2), [F('1', x2), 'ln x', '−' + F('1', 'x')], { h: '1/x = x⁻¹, поэтому (1/x)′ = −1·x⁻² = −1/x².' }],
+  [`(e${P('x')})′`, `e${P('x')}`, [`x·e${P('x−1')}`, `e${P('x')}·ln x`, F(`e${P('x')}`, 'x')]],
+  [`(a${P('x')})′`, `a${P('x')}·ln a`, [`x·a${P('x−1')}`, F(`a${P('x')}`, 'ln a'), `a${P('x')}`], { h: 'aˣ = e^(x·ln a), производная — то же самое, умноженное на ln a. При a = e получается (eˣ)′ = eˣ.' }],
+  ['(ln x)′', F('1', 'x'), ['−' + F('1', 'x'), F('ln x', 'x'), `e${P('x')}`]],
+  [`(log${B('a')} x)′`, F('1', 'x·ln a'), [F('1', 'x'), F('ln a', 'x'), F('1', 'a·ln x')], { h: 'logₐ x = ln x / ln a — делим производную ln x на ln a.' }],
+  ['(sin x)′', 'cos x', ['−cos x', 'sin x', '−sin x']],
+  ['(cos x)′', '−sin x', ['sin x', 'cos x', '−cos x']],
+  ['(tg x)′', F('1', cos2), ['−' + F('1', cos2), F('1', sin2), '−' + F('1', sin2)], { h: 'tg x = sin x / cos x; по правилу частного: (cos²x + sin²x) / cos²x = 1 / cos²x.' }],
+  ['(ctg x)′', '−' + F('1', sin2), [F('1', sin2), F('1', cos2), '−' + F('1', cos2)], { h: 'ctg — «ко»-функция, значит минус; и знаменатель «ко»-наоборот: sin²x.' }],
+  ['(arcsin x)′', F('1', R(`1 − ${x2}`)), ['−' + F('1', R(`1 − ${x2}`)), F('1', `1 + ${x2}`), F('1', R(`1 + ${x2}`))]],
+  ['(arccos x)′', '−' + F('1', R(`1 − ${x2}`)), [F('1', R(`1 − ${x2}`)), '−' + F('1', `1 + ${x2}`), F('1', R(`${x2} − 1`))], { h: 'arcsin x + arccos x = π/2, поэтому их производные отличаются только знаком.' }],
+  ['(arctg x)′', F('1', `1 + ${x2}`), ['−' + F('1', `1 + ${x2}`), F('1', R(`1 − ${x2}`)), F('1', `1 − ${x2}`)]],
+  ['(arcctg x)′', '−' + F('1', `1 + ${x2}`), [F('1', `1 + ${x2}`), '−' + F('1', R(`1 − ${x2}`)), '−' + F('1', `1 − ${x2}`)], { h: 'arctg x + arcctg x = π/2, поэтому производные отличаются только знаком.' }],
+  ['(u·v)′', 'u′v + uv′', ['u′·v′', 'u′v − uv′', 'u′ + v′']],
+  [`(${F('u', 'v')})′`, F('u′v − uv′', sq('v')), [F('u′v + uv′', sq('v')), F('uv′ − u′v', sq('v')), F('u′', 'v′')], { h: '«Производная верха на низ минус верх на производную низа, всё делить на низ в квадрате».' }],
+  ['(f(g(x)))′', 'f′(g(x))·g′(x)', ['f′(g(x))', 'f′(x)·g′(x)', 'f(g′(x))'], { h: 'Производная сложной функции: производная внешней (от того же аргумента) умножить на производную внутренней.' }],
+]);
+
+add('int', [
+  [`∫ x${P('n')} dx <span class="cond">(n ≠ −1)</span>`, F(`x${P('n+1')}`, 'n + 1') + C, [`n·x${P('n−1')}` + C, `x${P('n+1')}` + C, F(`x${P('n+1')}`, 'n') + C]],
+  [`∫ ${F('dx', 'x')}`, `ln${AB('x')}` + C, ['−' + F('1', x2) + C, F('1', x2) + C, F(x2, '2') + C]],
+  [`∫ e${P('x')} dx`, `e${P('x')}` + C, [F(`e${P('x+1')}`, 'x + 1') + C, `x·e${P('x')}` + C, `e${P('x')}·ln x` + C]],
+  [`∫ a${P('x')} dx`, F(`a${P('x')}`, 'ln a') + C, [`a${P('x')}·ln a` + C, F(`a${P('x+1')}`, 'x + 1') + C, `a${P('x')}` + C]],
+  ['∫ sin x dx', '−cos x' + C, ['cos x' + C, '−sin x' + C, 'sin x' + C]],
+  ['∫ cos x dx', 'sin x' + C, ['−sin x' + C, '−cos x' + C, 'cos x' + C]],
+  [`∫ ${F('dx', cos2)}`, 'tg x' + C, ['−tg x' + C, 'ctg x' + C, '−ctg x' + C]],
+  [`∫ ${F('dx', sin2)}`, '−ctg x' + C, ['ctg x' + C, 'tg x' + C, '−tg x' + C]],
+  [`∫ ${F('dx', `1 + ${x2}`)}`, 'arctg x' + C, ['arcsin x' + C, `ln(1 + ${x2})` + C, '−arctg x' + C]],
+  [`∫ ${F('dx', R(`1 − ${x2}`))}`, 'arcsin x' + C, ['arctg x' + C, R(`1 − ${x2}`) + C, '−arcsin x' + C]],
+  [`∫ ${F('dx', `${x2} + a${P(2)}`)}`, F('1', 'a') + ' arctg ' + F('x', 'a') + C, ['arctg ' + F('x', 'a') + C, F('1', 'a') + ' arcsin ' + F('x', 'a') + C, 'a · arctg ' + F('x', 'a') + C]],
+  [`∫ ${F('dx', R(`a${P(2)} − ${x2}`))}`, 'arcsin ' + F('x', 'a') + C, [F('1', 'a') + ' arcsin ' + F('x', 'a') + C, F('1', 'a') + ' arctg ' + F('x', 'a') + C, 'a · arcsin ' + F('x', 'a') + C], { h: 'Множителя 1/a здесь нет (в отличие от arctg): при замене x = a·t корень тоже даёт множитель a, и они сокращаются.' }],
+  [`∫ ${F('dx', `${x2} − a${P(2)}`)}`, F('1', '2a') + ' ln' + AB(F('x − a', 'x + a')) + C, [F('1', '2a') + ' ln' + AB(F('x + a', 'x − a')) + C, F('1', 'a') + ' ln' + AB(F('x − a', 'x + a')) + C, F('1', 'a') + ' arctg ' + F('x', 'a') + C], { h: '«Высокий логарифм»: разложи 1/(x² − a²) = (1/2a)·(1/(x − a) − 1/(x + a)).' }],
+  [`∫ ${F('dx', R(`${x2} ± a${P(2)}`))}`, 'ln' + AB('x + ' + R(`${x2} ± a${P(2)}`)) + C, ['arcsin ' + F('x', 'a') + C, R(`${x2} ± a${P(2)}`) + C, F('1', 'a') + ' arctg ' + F('x', 'a') + C], { h: '«Длинный логарифм». Arcsin бывает только при a² − x² под корнем.' }],
+  ['∫ tg x dx', '−ln' + AB('cos x') + C, ['ln' + AB('cos x') + C, F('1', cos2) + C, 'ln' + AB('sin x') + C], { h: 'tg x = sin x / cos x = −(cos x)′ / cos x, а ∫ f′/f dx = ln|f|.' }],
+  ['∫ ctg x dx', 'ln' + AB('sin x') + C, ['−ln' + AB('sin x') + C, '−' + F('1', sin2) + C, '−ln' + AB('cos x') + C], { h: 'ctg x = cos x / sin x = (sin x)′ / sin x, а ∫ f′/f dx = ln|f|.' }],
+  ['∫ u dv', 'uv − ∫ v du', ['uv + ∫ v du', 'u′v − ∫ v du', '∫ u du · ∫ dv'], { h: 'Интегрирование по частям — это правило (uv)′ = u′v + uv′, проинтегрированное и переставленное.' }],
+  [`∫${B('a')}${P('b')} f(x) dx`, 'F(b) − F(a)', ['F(a) − F(b)', 'f(b) − f(a)', 'F(b) + F(a)'], { h: 'Формула Ньютона — Лейбница: F — первообразная f; «верхний предел минус нижний».' }],
+]);
+
+/* --- значения тригонометрических функций: считаются, а не вписаны руками --- */
+const VALS = [[0, '0'], [0.5, F('1', '2')], [Math.SQRT2 / 2, F('√2', '2')], [Math.sqrt(3) / 2, F('√3', '2')],
+  [1, '1'], [Math.sqrt(3), '√3'], [Math.sqrt(3) / 3, F('√3', '3')]];
+const NOVAL = 'не существует';
+function canonVal(x) {
+  if (!isFinite(x) || Math.abs(x) > 1e9) return NOVAL;
+  for (const [v, s] of VALS) if (Math.abs(Math.abs(x) - v) < 1e-9) return (x < 0 && v !== 0 ? '−' : '') + s;
+  return null;
+}
+function canonAng(v) {
+  if (Math.abs(v) < 1e-12) return '0';
+  const r = v / Math.PI;
+  for (const q of [1, 2, 3, 4, 6]) {
+    const p = Math.round(r * q);
+    if (Math.abs(p / q - r) < 1e-9) {
+      const ap = Math.abs(p), sg = p < 0 ? '−' : '';
+      const top = (ap === 1 ? '' : ap) + 'π';
+      return sg + (q === 1 ? top : F(top, q));
+    }
+  }
+  return null;
+}
+const RAD = { 0: '0', 30: F('π', '6'), 45: F('π', '4'), 60: F('π', '3'), 90: F('π', '2'), 120: F('2π', '3'), 135: F('3π', '4'),
+  150: F('5π', '6'), 180: 'π', 210: F('7π', '6'), 240: F('4π', '3'), 270: F('3π', '2'), 300: F('5π', '3'), 330: F('11π', '6') };
+const TRIG = {
+  sin: d => Math.sin(d * Math.PI / 180),
+  cos: d => Math.cos(d * Math.PI / 180),
+  tg: d => Math.sin(d * Math.PI / 180) / Math.cos(d * Math.PI / 180),
+  ctg: d => Math.cos(d * Math.PI / 180) / Math.sin(d * Math.PI / 180),
+};
+const TRIG_ANGLES = {
+  sin: [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330],
+  cos: [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330],
+  tg: [0, 30, 45, 60, 90, 120, 135, 150, 180],
+  ctg: [30, 45, 60, 90, 135],
+};
+for (const fn in TRIG_ANGLES) for (const deg of TRIG_ANGLES[fn]) {
+  BANK.push({ c: 'trv', p: 'val', fn, deg, x: TRIG[fn](deg),
+    q: `${fn} ${deg}°` + (deg ? ` <span class="rad">(${RAD[deg]})</span>` : ''),
+    a: canonVal(TRIG[fn](deg)) });
+}
+const ARCS = [
+  ['arcsin', 0.5], ['arcsin', Math.SQRT2 / 2], ['arcsin', Math.sqrt(3) / 2], ['arcsin', 1], ['arcsin', -0.5], ['arcsin', -Math.sqrt(3) / 2],
+  ['arccos', 0.5], ['arccos', Math.sqrt(3) / 2], ['arccos', 0], ['arccos', -0.5], ['arccos', -Math.SQRT2 / 2], ['arccos', -Math.sqrt(3) / 2], ['arccos', -1],
+  ['arctg', 1], ['arctg', Math.sqrt(3)], ['arctg', Math.sqrt(3) / 3], ['arctg', -1], ['arctg', -Math.sqrt(3)],
+];
+const ARCF = { arcsin: Math.asin, arccos: Math.acos, arctg: Math.atan };
+for (const [fn, x] of ARCS) {
+  const arg = canonVal(x);
+  BANK.push({ c: 'trv', p: 'ang', fn, x, v: ARCF[fn](x),
+    q: `${fn} ${x < 0 ? '(' + arg + ')' : arg}`, a: canonAng(ARCF[fn](x)),
+    h: 'arcsin и arctg дают угол из [−π/2; π/2], arccos — из [0; π]. Поэтому arcsin(−x) = −arcsin x, arctg(−x) = −arctg x, но arccos(−x) = π − arccos x.' });
+}
+
+/* --- тригонометрические формулы --- */
+const sa = 'sin α', ca = 'cos α', sb = 'sin β', cb = 'cos β', ta = 'tg α', tb = 'tg β';
+const s2a = sq('sin') + 'α', c2a = sq('cos') + 'α', t2a = sq('tg') + 'α';
+const HP = F('α + β', '2'), HM = F('α − β', '2');
+const half = F('1', '2');
+const RED = { h: 'Формулы приведения: если в аргументе π/2 или 3π/2 — функция меняется на «ко-функцию» (sin ↔ cos, tg ↔ ctg), если π или 2π — не меняется. Знак — как у исходной функции в той четверти, куда попадает угол при остром α.' };
+const UNI = { h: 'Универсальная подстановка: t = tg(α/2), sin α = 2t / (1 + t²), cos α = (1 − t²) / (1 + t²). Знаменатель всегда 1 + t².' };
+const th = sq('tg') + F('α', '2'), t1 = 'tg ' + F('α', '2');
+add('trf', [
+  [`${s2a} + ${c2a}`, '1', ['0', '2', 'sin 2α']],
+  [`1 + ${t2a}`, F('1', c2a), [F('1', s2a), sq('ctg') + 'α', F('1', ca)]],
+  [`1 + ${sq('ctg')}α`, F('1', s2a), [F('1', c2a), t2a, F('1', sa)]],
+  ['sin 2α', `2 ${sa} ${ca}`, ['2 sin α', `${s2a} − ${c2a}`, `${sa} ${ca}`]],
+  ['cos 2α <span class="cond">(через sin и cos)</span>', `${c2a} − ${s2a}`, [`${s2a} − ${c2a}`, '2 cos α', `2 ${sa} ${ca}`], { g: 'cos2' }],
+  ['cos 2α <span class="cond">(через sin)</span>', `1 − 2 ${s2a}`, [`2 ${s2a} − 1`, `1 + 2 ${s2a}`, `1 − ${s2a}`], { g: 'cos2' }],
+  ['cos 2α <span class="cond">(через cos)</span>', `2 ${c2a} − 1`, [`1 − 2 ${c2a}`, `2 ${c2a} + 1`, `${c2a} − 1`], { g: 'cos2' }],
+  ['tg 2α', F(`2 ${ta}`, `1 − ${t2a}`), [F(`2 ${ta}`, `1 + ${t2a}`), `2 ${ta}`, F(ta, `1 − ${t2a}`)]],
+  ['sin 3α', `3 ${sa} − 4 sin${P(3)}α`, [`4 sin${P(3)}α − 3 ${sa}`, `3 ${sa} + 4 sin${P(3)}α`, `3 ${sa} − 4 cos${P(3)}α`]],
+  ['cos 3α', `4 cos${P(3)}α − 3 ${ca}`, [`3 ${ca} − 4 cos${P(3)}α`, `4 cos${P(3)}α + 3 ${ca}`, `3 ${ca} − 4 sin${P(3)}α`]],
+  ['sin(α + β)', `${sa} ${cb} + ${ca} ${sb}`, [`${sa} ${cb} − ${ca} ${sb}`, `${ca} ${cb} − ${sa} ${sb}`, `${sa} ${sb} + ${ca} ${cb}`]],
+  ['sin(α − β)', `${sa} ${cb} − ${ca} ${sb}`, [`${sa} ${cb} + ${ca} ${sb}`, `${ca} ${sb} − ${sa} ${cb}`, `${ca} ${cb} − ${sa} ${sb}`]],
+  ['cos(α + β)', `${ca} ${cb} − ${sa} ${sb}`, [`${ca} ${cb} + ${sa} ${sb}`, `${sa} ${cb} + ${ca} ${sb}`, `${ca} ${sb} − ${sa} ${cb}`]],
+  ['cos(α − β)', `${ca} ${cb} + ${sa} ${sb}`, [`${ca} ${cb} − ${sa} ${sb}`, `${sa} ${cb} − ${ca} ${sb}`, `${sa} ${sb} − ${ca} ${cb}`]],
+  ['tg(α + β)', F(`${ta} + ${tb}`, `1 − ${ta} ${tb}`), [F(`${ta} + ${tb}`, `1 + ${ta} ${tb}`), F(`${ta} − ${tb}`, `1 + ${ta} ${tb}`), `${ta} + ${tb}`]],
+  ['tg(α − β)', F(`${ta} − ${tb}`, `1 + ${ta} ${tb}`), [F(`${ta} − ${tb}`, `1 − ${ta} ${tb}`), F(`${ta} + ${tb}`, `1 − ${ta} ${tb}`), `${ta} − ${tb}`]],
+  [`${s2a} <span class="cond">(понижение степени)</span>`, F('1 − cos 2α', '2'), [F('1 + cos 2α', '2'), F('1 − sin 2α', '2'), F('1 − cos α', '2')]],
+  [`${c2a} <span class="cond">(понижение степени)</span>`, F('1 + cos 2α', '2'), [F('1 − cos 2α', '2'), F('1 + sin 2α', '2'), F('1 + cos α', '2')]],
+  ['sin α + sin β', `2 sin ${HP} cos ${HM}`, [`2 cos ${HP} sin ${HM}`, `2 sin ${HP} sin ${HM}`, `2 cos ${HP} cos ${HM}`]],
+  ['sin α − sin β', `2 sin ${HM} cos ${HP}`, [`2 sin ${HP} cos ${HM}`, `2 cos ${HP} cos ${HM}`, `−2 sin ${HP} sin ${HM}`]],
+  ['cos α + cos β', `2 cos ${HP} cos ${HM}`, [`−2 sin ${HP} sin ${HM}`, `2 sin ${HP} cos ${HM}`, `2 sin ${HP} sin ${HM}`]],
+  ['cos α − cos β', `−2 sin ${HP} sin ${HM}`, [`2 sin ${HP} sin ${HM}`, `2 cos ${HP} cos ${HM}`, `−2 cos ${HP} sin ${HM}`]],
+  ['sin α · sin β', `${half}(cos(α − β) − cos(α + β))`, [`${half}(cos(α + β) − cos(α − β))`, `${half}(cos(α − β) + cos(α + β))`, `${half}(sin(α + β) + sin(α − β))`]],
+  ['cos α · cos β', `${half}(cos(α − β) + cos(α + β))`, [`${half}(cos(α − β) − cos(α + β))`, `${half}(sin(α + β) + sin(α − β))`, 'cos(α + β) + cos(α − β)']],
+  ['sin α · cos β', `${half}(sin(α + β) + sin(α − β))`, [`${half}(sin(α + β) − sin(α − β))`, `${half}(cos(α − β) + cos(α + β))`, 'sin(α + β) + sin(α − β)']],
+  [`sin(${F('π', '2')} − α)`, 'cos α', ['sin α', '−cos α', '−sin α'], RED],
+  [`cos(${F('π', '2')} + α)`, '−sin α', ['sin α', 'cos α', '−cos α'], RED],
+  ['sin(π − α)', 'sin α', ['−sin α', 'cos α', '−cos α'], RED],
+  ['cos(π − α)', '−cos α', ['cos α', 'sin α', '−sin α'], RED],
+  ['sin(π + α)', '−sin α', ['sin α', 'cos α', '−cos α'], RED],
+  [`tg(${F('π', '2')} + α)`, '−ctg α', ['ctg α', 'tg α', '−tg α'], RED],
+  [`cos(${F('3π', '2')} − α)`, '−sin α', ['sin α', 'cos α', '−cos α'], RED],
+  [`sin α <span class="cond">(через tg α/2)</span>`, F(`2 ${t1}`, `1 + ${th}`), [F(`2 ${t1}`, `1 − ${th}`), F(`1 − ${th}`, `1 + ${th}`), F(t1, `1 + ${th}`)], UNI],
+  [`cos α <span class="cond">(через tg α/2)</span>`, F(`1 − ${th}`, `1 + ${th}`), [F(`1 + ${th}`, `1 − ${th}`), F(`2 ${t1}`, `1 + ${th}`), F(`1 − ${th}`, '2')], UNI],
+]);
+
+const a2 = 'a' + P(2), b2 = 'b' + P(2), a3 = 'a' + P(3), b3 = 'b' + P(3);
+add('alg', [
+  ['(a + b)²', `${a2} + 2ab + ${b2}`, [`${a2} + ${b2}`, `${a2} + ab + ${b2}`, `${a2} − 2ab + ${b2}`]],
+  ['(a − b)²', `${a2} − 2ab + ${b2}`, [`${a2} − ${b2}`, `${a2} − ab + ${b2}`, `${a2} + 2ab − ${b2}`]],
+  [`${a2} − ${b2}`, '(a − b)(a + b)', ['(a − b)²', '(a + b)²', '(b − a)(b + a)']],
+  ['(a + b)³', `${a3} + 3${a2}b + 3a${b2} + ${b3}`, [`${a3} + ${b3}`, `${a3} + 3ab + ${b3}`, `${a3} + 3${a2}b − 3a${b2} + ${b3}`]],
+  ['(a − b)³', `${a3} − 3${a2}b + 3a${b2} − ${b3}`, [`${a3} − ${b3}`, `${a3} − 3${a2}b − 3a${b2} − ${b3}`, `${a3} + 3${a2}b − 3a${b2} − ${b3}`]],
+  [`${a3} + ${b3}`, `(a + b)(${a2} − ab + ${b2})`, [`(a + b)(${a2} + ab + ${b2})`, '(a + b)³', `(a − b)(${a2} + ab + ${b2})`], { h: 'Знак в первой скобке — как в условии, перед ab — противоположный, перед b² — всегда плюс.' }],
+  [`${a3} − ${b3}`, `(a − b)(${a2} + ab + ${b2})`, [`(a − b)(${a2} − ab + ${b2})`, '(a − b)³', `(a + b)(${a2} − ab + ${b2})`], { h: 'Знак в первой скобке — как в условии, перед ab — противоположный, перед b² — всегда плюс.' }],
+  [`D <span class="cond">(a${x2} + bx + c = 0)</span>`, `${b2} − 4ac`, [`${b2} + 4ac`, `${b2} − 2ac`, `4ac − ${b2}`]],
+  [`x${B('1,2')} <span class="cond">(a${x2} + bx + c = 0)</span>`, F('−b ± √D', '2a'), [F('b ± √D', '2a'), F('−b ± √D', 'a'), F('−b ± D', '2a')]],
+  [`x${B(1)} + x${B(2)} <span class="cond">(${x2} + px + q = 0)</span>`, '−p', ['p', 'q', '−q'], { h: 'Теорема Виета: сумма корней — второй коэффициент с обратным знаком, произведение — свободный член.' }],
+  [`x${B(1)} · x${B(2)} <span class="cond">(${x2} + px + q = 0)</span>`, 'q', ['−q', 'p', '−p'], { h: 'Теорема Виета: сумма корней — второй коэффициент с обратным знаком, произведение — свободный член.' }],
+  [`a${B('n')} <span class="cond">(арифм. прогрессия)</span>`, `a${B(1)} + (n − 1)d`, [`a${B(1)} + nd`, `a${B(1)} · d${P('n−1')}`, `a${B(1)} + (n + 1)d`]],
+  [`S${B('n')} <span class="cond">(арифм. прогрессия)</span>`, F(`(a${B(1)} + a${B('n')})·n`, '2'), [`(a${B(1)} + a${B('n')})·n`, F(`a${B(1)} + a${B('n')}`, '2'), F(`(a${B(1)} + a${B('n')})·n`, 'd')]],
+  [`b${B('n')} <span class="cond">(геом. прогрессия)</span>`, `b${B(1)} · q${P('n−1')}`, [`b${B(1)} · q${P('n')}`, `b${B(1)} + (n − 1)q`, `b${B(1)} · q · (n − 1)`]],
+  [`S${B('n')} <span class="cond">(геом. прогрессия)</span>`, F(`b${B(1)}(q${P('n')} − 1)`, 'q − 1'), [F(`b${B(1)}(q${P('n')} − 1)`, 'q + 1'), F(`b${B(1)}`, '1 − q'), F(`b${B(1)}(q${P('n−1')} − 1)`, 'q − 1')]],
+  [`S <span class="cond">(бесконечная геом., |q| &lt; 1)</span>`, F(`b${B(1)}`, '1 − q'), [F(`b${B(1)}`, '1 + q'), `b${B(1)}(1 − q)`, F(`b${B(1)}`, 'q − 1')]],
+  ['1 + 2 + … + n', F('n(n + 1)', '2'), [F('n(n − 1)', '2'), F(sq('n'), '2'), 'n(n + 1)']],
+]);
+
+const L = x => `log${B(x)}`;
+add('log', [
+  [`a${P('m')} · a${P('n')}`, `a${P('m+n')}`, [`a${P('mn')}`, `a${P('m−n')}`, `(2a)${P('m+n')}`]],
+  [F(`a${P('m')}`, `a${P('n')}`), `a${P('m−n')}`, [`a${P('m/n')}`, `a${P('m+n')}`, `a${P('n−m')}`]],
+  [`(a${P('m')})${P('n')}`, `a${P('mn')}`, [`a${P('m+n')}`, `a${P('m<sup>n</sup>')}`, `n · a${P('m')}`]],
+  [`a${P('−n')}`, F('1', `a${P('n')}`), [`−a${P('n')}`, `a${P('1/n')}`, '−' + F('1', `a${P('n')}`)]],
+  [`a${P('m/n')}`, `${P('n')}√<span class="rt">a${P('m')}</span>`, [`${P('m')}√<span class="rt">a${P('n')}</span>`, F(`a${P('m')}`, 'n'), `n · a${P('m')}`]],
+  [`(ab)${P('n')}`, `a${P('n')}b${P('n')}`, [`ab${P('n')}`, `a${P('n')} + b${P('n')}`, `(a + b)${P('n')}`]],
+  [`${L('a')}(bc)`, `${L('a')} b + ${L('a')} c`, [`${L('a')} b · ${L('a')} c`, `${L('a')} b − ${L('a')} c`, `${L('a')}(b + c)`]],
+  [`${L('a')} ${F('b', 'c')}`, `${L('a')} b − ${L('a')} c`, [F(`${L('a')} b`, `${L('a')} c`), `${L('a')} b + ${L('a')} c`, `${L('a')} c − ${L('a')} b`]],
+  [`${L('a')} b${P('p')}`, `p · ${L('a')} b`, [`(${L('a')} b)${P('p')}`, `${L('a')} b + p`, `b · ${L('a')} p`]],
+  [`${L('a<sup>k</sup>')} b`, F('1', 'k') + ` ${L('a')} b`, [`k · ${L('a')} b`, `${L('a')} b − k`, `(${L('a')} b)${P('k')}`]],
+  [`a${P(L('a') + ' b')}`, 'b', ['a', `${L('a')} b`, `a${P('b')}`]],
+  [`${L('a')} b <span class="cond">(переход к основанию c)</span>`, F(`${L('c')} b`, `${L('c')} a`), [F(`${L('c')} a`, `${L('c')} b`), `${L('c')} b − ${L('c')} a`, `${L('c')} b · ${L('c')} a`]],
+  [`${L('a')} b · ${L('b')} a`, '1', ['0', 'ab', `${L('a')} b`]],
+]);
+
+const lim0 = `lim${B('x→0')}`;
+const ex = `e${P('x')}`;
+add('lim', [
+  [`${lim0} ${F('sin x', 'x')}`, '1', ['0', '∞', 'π']],
+  [`lim${B('x→∞')} (1 + ${F('1', 'x')})${P('x')}`, 'e', ['1', '∞', '0'], { h: 'Второй замечательный предел: «1 в степени ∞» даёт e.' }],
+  [`${lim0} (1 + x)${P('1/x')}`, 'e', ['1', '0', '∞'], { h: 'Тот же второй замечательный предел, записанный через x → 0.' }],
+  [`${lim0} ${F(`${ex} − 1`, 'x')}`, '1', ['e', '0', '∞']],
+  [`${lim0} ${F(`a${P('x')} − 1`, 'x')}`, 'ln a', ['a', '1', F('1', 'ln a')]],
+  [`${lim0} ${F('ln(1 + x)', 'x')}`, '1', ['e', '0', '∞']],
+  [`${lim0} ${F(`(1 + x)${P('k')} − 1`, 'x')}`, 'k', ['1', 'k − 1', '0']],
+  [`${lim0} ${F('1 − cos x', x2)}`, F('1', '2'), ['1', '0', '2'], { h: 'cos x ≈ 1 − x²/2 при малых x, поэтому 1 − cos x ≈ x²/2.' }],
+  [`${lim0} ${F('tg x', 'x')}`, '1', ['0', '∞', F('π', '2')]],
+  [ex, `1 + x + ${F(x2, '2!')} + ${F('x' + P(3), '3!')} + …`, [`1 + x + ${x2} + x${P(3)} + …`, `x − ${F('x' + P(3), '3!')} + ${F('x' + P(5), '5!')} − …`, `1 − x + ${F(x2, '2!')} − ${F('x' + P(3), '3!')} + …`]],
+  ['sin x', `x − ${F('x' + P(3), '3!')} + ${F('x' + P(5), '5!')} − …`, [`1 − ${F(x2, '2!')} + ${F('x' + P(4), '4!')} − …`, `x + ${F('x' + P(3), '3!')} + ${F('x' + P(5), '5!')} + …`, `x − ${F(x2, '2')} + ${F('x' + P(3), '3')} − …`]],
+  ['cos x', `1 − ${F(x2, '2!')} + ${F('x' + P(4), '4!')} − …`, [`x − ${F('x' + P(3), '3!')} + ${F('x' + P(5), '5!')} − …`, `1 + ${F(x2, '2!')} + ${F('x' + P(4), '4!')} + …`, `1 − x + ${F(x2, '2!')} − …`]],
+  ['ln(1 + x)', `x − ${F(x2, '2')} + ${F('x' + P(3), '3')} − …`, [`x + ${F(x2, '2')} + ${F('x' + P(3), '3')} + …`, `1 + x + ${F(x2, '2!')} + …`, `x − ${F('x' + P(3), '3!')} + ${F('x' + P(5), '5!')} − …`]],
+  [F('1', '1 − x') + ' <span class="cond">(|x| &lt; 1)</span>', `1 + x + ${x2} + x${P(3)} + …`, [`1 − x + ${x2} − x${P(3)} + …`, `1 + x + ${F(x2, '2!')} + …`, `x + ${x2} + x${P(3)} + …`]],
+  ['(1 + x)' + P('k'), `1 + kx + ${F('k(k − 1)', '2!')}${x2} + …`, [`1 + kx + k${P(2)}${x2} + …`, `1 + x + ${F(x2, '2!')} + …`, `k + kx + k${x2} + …`]],
+]);
+
+// 4 варианта ответа: правильный + отвлекающие (свои, затем из той же темы, исключая эквивалентные)
+function makeOptions(it) {
+  const opts = [it.a];
+  for (const x of shuffle((it.d || []).slice())) { if (opts.length >= 4) break; if (!opts.includes(x)) opts.push(x); }
+  if (opts.length < 4) {
+    const pool = shuffle(BANK.filter(o => o !== it && o.c === it.c && (o.p || '') === (it.p || '') && !(it.g && o.g === it.g)).map(o => o.a));
+    for (const x of pool) { if (opts.length >= 4) break; if (!opts.includes(x)) opts.push(x); }
+  }
+  return shuffle(opts);
+}
+
+// темы чередуются случайно, чтобы большая тема не вытесняла маленькие
+function makeFormulaSet(cats, n) {
+  const q = {};
+  for (const c of cats) q[c] = shuffle(BANK.filter(it => it.c === c));
+  const out = [];
+  while (out.length < n) {
+    const avail = cats.filter(c => q[c] && q[c].length);
+    if (!avail.length) break;
+    out.push({ kind: 'f', item: q[pick(avail)].pop() });
+  }
+  return out;
+}
+
+/* ================= хранилище ================= */
+const KEY_HIST = 'ustny.history.v1', KEY_SET = 'ustny.settings.v1';
+const store = {
+  ok: (() => { try { const k = '__t'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch (e) { return false; } })(),
+  mem: {},
+  get(k, def) {
+    try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); }
+    catch (e) { return k in this.mem ? this.mem[k] : def; }
+  },
+  set(k, v) {
+    this.mem[k] = v;
+    try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; }
+  },
+};
+
+/* ================= интерфейс ================= */
+const MODES = { add: 'Сложение', mul: 'Умножение', mix: 'Смешанный', f: 'Формулы' };
+const LEVEL_DESC = {
+  add: ['', 'трёхзначное + трёхзначное с переходом через разряд, три двузначных', 'четырёхзначное + трёхзначное, три трёхзначных',
+    'четырёхзначное + четырёхзначное', 'пятизначное + четырёхзначное, четыре трёхзначных', 'пятизначные, цепочки из 3–4 чисел'],
+  mul: ['', 'двузначное × однозначное, 11–19 × 11–19, × 11, × 25', 'двузначное × двузначное до 50, квадраты чисел на 5',
+    'любые двузначные, квадраты двузначных', 'трёхзначное × однозначное', 'трёхзначное × двузначное, квадраты чисел около 100'],
+};
+const fmtTime = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const fmtSec = ms => (ms / 1000).toFixed(1).replace('.', ',') + ' с';
+const catsLabel = cats => cats.length === CATS.length ? 'все темы' : cats.map(c => CAT[c].short || CAT[c].name).join(', ');
+
+function init() {
+  const $ = id => document.getElementById(id);
+  let cfg = Object.assign({ mode: 'add', level: 1, n: 10, cats: CATS.map(c => c.id) }, store.get(KEY_SET, {}));
+  if (!MODES[cfg.mode]) cfg.mode = 'add';
+  if (!(cfg.level >= 1 && cfg.level <= 5)) cfg.level = 1;
+  if (cfg.n !== 10 && cfg.n !== 20) cfg.n = 10;
+  cfg.cats = (Array.isArray(cfg.cats) ? cfg.cats : []).filter(c => CAT[c]);
+  if (!cfg.cats.length) cfg.cats = CATS.map(c => c.id);
+
+  let S = null, tickId = 0, nextId = 0;
+
+  const show = id => { for (const s of document.querySelectorAll('.screen')) s.hidden = s.id !== id; window.scrollTo(0, 0); };
+  const history = () => { const h = store.get(KEY_HIST, []); return Array.isArray(h) ? h : []; };
+
+  /* --- стартовый экран --- */
+  $('cats').innerHTML = CATS.map(c => `<button type="button" data-v="${c.id}">${c.name}</button>`).join('');
+
+  function renderStart() {
+    const press = (seg, v) => { for (const b of $(seg).children) b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); };
+    press('seg-mode', cfg.mode); press('seg-level', cfg.level); press('seg-n', cfg.n);
+    for (const b of $('cats').children) b.setAttribute('aria-pressed', String(cfg.cats.includes(b.dataset.v)));
+    const isF = cfg.mode === 'f';
+    $('lvl-block').hidden = isF; $('cat-block').hidden = !isF;
+    $('lvl-desc').textContent = cfg.mode === 'mix'
+      ? 'вперемешку: ' + LEVEL_DESC.add[cfg.level] + '; ' + LEVEL_DESC.mul[cfg.level]
+      : (LEVEL_DESC[cfg.mode] || [])[cfg.level] || '';
+    renderBest(); renderHist();
+    $('store-note').hidden = store.ok;
+  }
+
+  function better(a, b) { // лучше — больший процент, при равенстве — быстрее
+    if (!b) return true;
+    const pa = a.c / a.n, pb = b.c / b.n;
+    return pa !== pb ? pa > pb : a.t / a.n < b.t / b.n;
+  }
+  function renderBest() {
+    const h = history().filter(r => !r.r);
+    if (!h.length) { $('best').innerHTML = '<div class="empty">Пока нет завершённых тренировок.</div>'; return; }
+    const best = {};
+    for (const r of h) { const k = r.m === 'f' ? 'f' : r.m + r.l; if (better(r, best[k])) best[k] = r; }
+    let html = '<table class="best"><tr><th></th>' + [1, 2, 3, 4, 5].map(l => `<th>ур. ${l}</th>`).join('') + '</tr>';
+    for (const m of ['add', 'mul', 'mix']) {
+      html += `<tr><td>${MODES[m]}</td>` + [1, 2, 3, 4, 5].map(l => {
+        const r = best[m + l];
+        return r ? `<td>${Math.round(100 * r.c / r.n)}%<small>${fmtSec(r.t / r.n)}</small></td>` : '<td class="muted">—</td>';
+      }).join('') + '</tr>';
+    }
+    html += '</table>';
+    const f = best.f;
+    html += `<div class="fbest"><b>Формулы:</b> ` + (f ? `${f.c}/${f.n} (${Math.round(100 * f.c / f.n)}%), ${fmtSec(f.t / f.n)} на вопрос <span class="muted">· ${f.l}</span>` : '<span class="muted">—</span>') + '</div>';
+    $('best').innerHTML = html;
+  }
+  function renderHist() {
+    const h = history().slice(-10).reverse();
+    if (!h.length) { $('hist').innerHTML = '<div class="empty">Здесь появятся последние 10 результатов.</div>'; return; }
+    $('hist').innerHTML = '<ul class="hist">' + h.map(r => {
+      const d = new Date(r.d);
+      const when = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ', ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      const what = MODES[r.m] + (r.m === 'f' ? ' · ' + r.l : ' · ур. ' + r.l) + (r.r ? ' · ошибки' : '');
+      return `<li><div>${what}<div class="when">${when}</div></div><div class="r"><b>${r.c}/${r.n}</b><div class="when">${fmtTime(r.t)}</div></div></li>`;
+    }).join('') + '</ul>';
+  }
+
+  const saveCfg = () => store.set(KEY_SET, cfg);
+  const onSeg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (b) { fn(b.dataset.v); saveCfg(); renderStart(); } });
+  onSeg('seg-mode', v => { cfg.mode = v; });
+  onSeg('seg-level', v => { cfg.level = Number(v); });
+  onSeg('seg-n', v => { cfg.n = Number(v); });
+  onSeg('cats', v => {
+    if (cfg.cats.includes(v)) { if (cfg.cats.length > 1) cfg.cats = cfg.cats.filter(c => c !== v); }
+    else cfg.cats = CATS.map(c => c.id).filter(c => c === v || cfg.cats.includes(c));
+  });
+
+  /* --- тренировка --- */
+  const newList = () => cfg.mode === 'f' ? makeFormulaSet(cfg.cats, cfg.n) : makeSet(cfg.mode, cfg.level, cfg.n);
+
+  function start(list, retry) {
+    S = { mode: cfg.mode, level: cfg.level, cats: cfg.cats.slice(), list, i: 0, correct: 0, mistakes: [], elapsed: 0, qStart: 0, lock: false, retry };
+    show('scr-quiz');
+    clearInterval(tickId);
+    tickId = setInterval(tick, 250);
+    showQ();
+  }
+  function tick() {
+    if (!S) return;
+    $('q-timer').textContent = fmtTime(S.elapsed + (S.lock ? 0 : performance.now() - S.qStart));
+  }
+
+  function showQ() {
+    const p = S.list[S.i];
+    $('q-count').textContent = `${S.i + 1} / ${S.list.length}`;
+    $('q-prog').style.width = (100 * S.i / S.list.length) + '%';
+    const qt = $('q-text');
+    qt.className = 'problem';
+    $('q-fb').textContent = ''; $('q-fb').className = 'fb';
+    $('q-hint').hidden = true;
+    if (p.kind === 'f') {
+      qt.classList.add('f');
+      qt.innerHTML = p.item.q + ' =';
+      $('q-form').hidden = true;
+      $('q-input').blur();
+      p.opts = makeOptions(p.item);
+      const box = $('q-opts');
+      box.hidden = false;
+      box.innerHTML = p.opts.map((o, i) => `<button type="button" data-i="${i}"><span class="k">${i + 1}</span><span>${o}</span></button>`).join('');
+    } else {
+      const len = p.text.length + 2;
+      if (len > 18) qt.classList.add('sm'); else if (len > 12) qt.classList.add('md');
+      qt.textContent = p.text + ' =';
+      $('q-opts').hidden = true;
+      $('q-form').hidden = false;
+      const inp = $('q-input');
+      inp.value = ''; inp.readOnly = false; inp.className = '';
+      inp.focus();
+    }
+    S.lock = false;
+    S.qStart = performance.now();
+    tick();
+  }
+
+  function finishAnswer(ok, p, given) {
+    S.lock = true;
+    S.elapsed += performance.now() - S.qStart;
+    if (ok) S.correct++; else S.mistakes.push({ p, given });
+    $('q-text').classList.add(ok ? 'ok' : 'bad');
+    const fb = $('q-fb');
+    fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+    tick();
+    const delay = ok ? 1000 : (p.kind === 'f' ? 2000 : 1000);
+    return { fb, delay };
+  }
+  function goNext(delay) {
+    nextId = setTimeout(() => {
+      S.i++;
+      if (S.i >= S.list.length) finish(); else showQ();
+    }, delay);
+  }
+
+  $('q-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!S || S.lock) return;
+    const p = S.list[S.i], inp = $('q-input');
+    const res = checkAnswer(p, inp.value);
+    if (res === null) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); return; }
+    const { fb, delay } = finishAnswer(res, p, inp.value.trim());
+    inp.readOnly = true;
+    inp.className = res ? 'ok' : 'bad';
+    fb.textContent = res ? 'Верно' : 'Неверно. Правильно: ' + fmt(p.answer);
+    inp.focus();
+    goNext(delay);
+  });
+
+  function chooseOpt(i) {
+    if (!S || S.lock) return;
+    const p = S.list[S.i];
+    if (p.kind !== 'f' || !p.opts[i]) return;
+    const ok = p.opts[i] === p.item.a;
+    const { fb, delay } = finishAnswer(ok, p, p.opts[i]);
+    const btns = $('q-opts').children;
+    btns[i].classList.add(ok ? 'ok' : 'bad');
+    if (!ok) btns[p.opts.indexOf(p.item.a)].classList.add('ok');
+    fb.textContent = ok ? 'Верно' : 'Неверно — правильный вариант подсвечен';
+    goNext(delay);
+  }
+  $('q-opts').addEventListener('click', e => { const b = e.target.closest('button'); if (b) chooseOpt(Number(b.dataset.i)); });
+
+  document.addEventListener('keydown', e => {
+    if ($('scr-quiz').hidden || !S) return;
+    const p = S.list[S.i];
+    if (p && p.kind === 'f' && e.key >= '1' && e.key <= '4') { chooseOpt(Number(e.key) - 1); e.preventDefault(); }
+    if (e.key === 'Escape') $('q-hint').hidden = true;
+  });
+
+  $('btn-hint').addEventListener('click', () => {
+    const box = $('q-hint');
+    if (!box.hidden) { box.hidden = true; return; }
+    const p = S.list[S.i];
+    box.innerHTML = p.kind === 'f' ? (p.item.h || CAT[p.item.c].h) : hint(p);
+    box.hidden = false;
+    if (p.kind !== 'f') $('q-input').focus();
+  });
+
+  $('btn-exit').addEventListener('click', () => {
+    if (S && S.i > 0 && !confirm('Прервать тренировку? Результат не сохранится.')) return;
+    clearTimeout(nextId); clearInterval(tickId); S = null;
+    renderStart(); show('scr-start');
+  });
+
+  /* --- итог --- */
+  function finish() {
+    clearInterval(tickId);
+    const n = S.list.length;
+    const rec = { d: Date.now(), m: S.mode, l: S.mode === 'f' ? catsLabel(S.cats) : S.level, c: S.correct, n, t: Math.round(S.elapsed), r: !!S.retry };
+    const h = history(); h.push(rec); store.set(KEY_HIST, h.slice(-300));
+
+    $('r-score').textContent = `${S.correct}/${n}`;
+    $('r-sub').textContent = MODES[S.mode] + (S.mode === 'f' ? ' · ' + rec.l : ' · уровень ' + S.level) + (S.retry ? ' · работа над ошибками' : '');
+    $('r-time').textContent = fmtTime(S.elapsed);
+    $('r-avg').textContent = fmtSec(S.elapsed / n);
+    $('r-err-card').hidden = !S.mistakes.length;
+    $('r-err').innerHTML = S.mistakes.map(({ p, given }) => p.kind === 'f'
+      ? `<li>${p.item.q} = <b>${p.item.a}</b><div class="yours">ваш ответ: ${given}</div></li>`
+      : `<li>${p.text} = <b>${fmt(p.answer)}</b> <span class="yours">(ваш ответ: ${given.replace(/[<>&]/g, '')})</span></li>`).join('');
+    $('btn-errs').disabled = !S.mistakes.length;
+    show('scr-result');
+  }
+  $('btn-again').addEventListener('click', () => { const retry = S && S.retry; start(retry ? shuffle(S.list.slice()) : newList(), retry); });
+  $('btn-errs').addEventListener('click', () => { if (S && S.mistakes.length) start(shuffle(S.mistakes.map(m => m.p)), true); });
+  $('btn-menu').addEventListener('click', () => { S = null; renderStart(); show('scr-start'); });
+
+  $('btn-go').addEventListener('click', () => start(newList(), false));
+
+  /* --- шпаргалка --- */
+  $('btn-sheet').addEventListener('click', () => {
+    let html = '';
+    for (const c of cfg.cats) {
+      html += `<div class="card"><h2>${CAT[c].name}</h2>`;
+      if (c === 'trv') {
+        const deg = TRIG_ANGLES.sin;
+        html += '<table class="trig"><tr><th>угол</th><th>sin</th><th>cos</th><th>tg</th><th>ctg</th></tr>' + deg.map(d =>
+          `<tr><td>${d}°${d ? ` <span class="rad">${RAD[d]}</span>` : ''}</td>` + ['sin', 'cos', 'tg', 'ctg'].map(fn => {
+            const v = TRIG[fn](d), s = canonVal(v);
+            return `<td>${s === NOVAL ? '—' : s}</td>`;
+          }).join('') + '</tr>').join('') + '</table>';
+        html += '<div class="sheet-sub">Обратные функции</div>';
+        html += BANK.filter(it => it.c === 'trv' && it.p === 'ang').map(it => `<div class="sheet-row">${it.q} = ${it.a}</div>`).join('');
+      } else {
+        html += BANK.filter(it => it.c === c).map(it => `<div class="sheet-row">${it.q} = ${it.a}</div>`).join('');
+      }
+      html += `<p class="muted" style="margin:10px 0 0;font-size:.9rem">${CAT[c].h}</p></div>`;
+    }
+    $('sheet').innerHTML = html;
+    show('scr-sheet');
+  });
+  $('btn-sheet-close').addEventListener('click', () => show('scr-start'));
+
+  renderStart();
+}
+
+if (typeof document !== 'undefined') init();
+</script>
+</body>
+</html>
